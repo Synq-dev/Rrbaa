@@ -197,8 +197,8 @@ export default function LeadsClient() {
                     <TableCell className="text-center"><Skeleton className="h-8 w-8 rounded-md" /></TableCell>
                   </TableRow>
                 ))
-              : leads.map((lead) => (
-                  <TableRow key={lead.id}>
+              : leads.map((lead, index) => (
+                  <TableRow key={`${lead.id}-${index}`}>
                     <TableCell>{new Date(lead.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>{lead.offer_title}</TableCell>
                     <TableCell>{lead.referrer_discord_id}</TableCell>
@@ -287,5 +287,3 @@ export default function LeadsClient() {
     </Card>
   );
 }
-
-    

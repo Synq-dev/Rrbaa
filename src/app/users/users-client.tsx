@@ -131,13 +131,11 @@ function AdjustWalletForm({ user, onSuccess }: { user: User, onSuccess: () => vo
 function ViewWalletTransactions({ userId }: { userId: string }) {
     const { data, isLoading } = useSWR<{data: WalletTransaction[]}>(`/users/${userId}/wallet_tx?limit=20`, fetcher);
 
-    const getTxTypeBadge = (type: WalletTransaction['type']) => {
-        const isCredit = ['lead_credit', 'manual_adjust', 'withdraw_rejected'].includes(type) && type !== 'withdraw_approved';
+    const getTxTypeBadge = (type: WalletTransaction['type'], amount: number) => {
+        const isCredit = amount > 0;
         let text = type.replace(/_/g, ' ');
-        if (type === 'manual_adjust' && data?.data.find(tx => tx.type === type)?.amount_paise ?? 0 > 0) {
-            text = "Manual Credit";
-        } else if (type === 'manual_adjust') {
-            text = "Manual Debit";
+        if (type === 'manual_adjust') {
+            text = isCredit ? "Manual Credit" : "Manual Debit";
         }
         
         return <Badge variant={isCredit ? 'default' : 'destructive'} className={`${isCredit ? 'bg-green-100 text-green-800' : ''} capitalize`}>{text}</Badge>;
@@ -176,7 +174,7 @@ function ViewWalletTransactions({ userId }: { userId: string }) {
                                 <TableRow key={tx._id}>
                                     <TableCell>{new Date(tx.created_at).toLocaleString()}</TableCell>
                                     <TableCell>
-                                        {getTxTypeBadge(tx.type)}
+                                        {getTxTypeBadge(tx.type, tx.amount_paise)}
                                     </TableCell>
                                     <TableCell className="max-w-[200px] truncate">{tx.note}</TableCell>
                                     <TableCell className={`text-right font-medium ${tx.amount_paise > 0 ? 'text-green-600' : 'text-red-600'}`}>

@@ -17,7 +17,17 @@ export async function api<T = any>(path: string, init: RequestInit = {}): Promis
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(`${API}${path}`, { ...init, headers });
+  let res;
+  try {
+    res = await fetch(`${API}${path}`, { ...init, headers });
+  } catch (error) {
+    console.error('Fetch failed:', error);
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Failed to fetch: Could not connect to the API server. Please check the network connection and the API endpoint.');
+    }
+    throw error;
+  }
+
 
   if (res.status === 401) {
     if (typeof window !== 'undefined') {

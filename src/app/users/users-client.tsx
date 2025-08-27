@@ -131,6 +131,19 @@ function AdjustWalletForm({ user, onSuccess }: { user: User, onSuccess: () => vo
 function ViewWalletTransactions({ userId }: { userId: string }) {
     const { data, isLoading } = useSWR<{data: WalletTransaction[]}>(`/users/${userId}/wallet_tx?limit=20`, fetcher);
 
+    const getTxTypeBadge = (type: WalletTransaction['type']) => {
+        const isCredit = ['lead_credit', 'manual_adjust', 'withdraw_rejected'].includes(type) && type !== 'withdraw_approved';
+        let text = type.replace(/_/g, ' ');
+        if (type === 'manual_adjust' && data?.data.find(tx => tx.type === type)?.amount_paise ?? 0 > 0) {
+            text = "Manual Credit";
+        } else if (type === 'manual_adjust') {
+            text = "Manual Debit";
+        }
+        
+        return <Badge variant={isCredit ? 'default' : 'destructive'} className={`${isCredit ? 'bg-green-100 text-green-800' : ''} capitalize`}>{text}</Badge>;
+    }
+
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -160,14 +173,14 @@ function ViewWalletTransactions({ userId }: { userId: string }) {
                                     <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
                                 </TableRow>
                             ) : (data?.data ?? []).map(tx => (
-                                <TableRow key={tx.id}>
+                                <TableRow key={tx._id}>
                                     <TableCell>{new Date(tx.created_at).toLocaleString()}</TableCell>
                                     <TableCell>
-                                        <Badge variant={tx.type === 'CREDIT' ? 'default' : 'destructive'} className={tx.type === 'CREDIT' ? 'bg-green-100 text-green-800' : ''}>{tx.type}</Badge>
+                                        {getTxTypeBadge(tx.type)}
                                     </TableCell>
                                     <TableCell className="max-w-[200px] truncate">{tx.note}</TableCell>
-                                    <TableCell className={`text-right font-medium ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}>
-                                      {tx.type === 'CREDIT' ? '+' : '-'}₹{(Math.abs(tx.amount_paise) / 100).toFixed(2)}
+                                    <TableCell className={`text-right font-medium ${tx.amount_paise > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      {tx.amount_paise > 0 ? '+' : ''}₹{(tx.amount_paise / 100).toFixed(2)}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -193,6 +206,7 @@ export default function UsersClient() {
   const { data, error, isLoading, mutate } = useSWR<{data: User[], meta: ApiMeta}>(`/users?${queryParams.toString()}`, fetcher, { revalidateOnFocus: false });
   const users = data?.data ?? [];
   const meta = data?.meta;
+  const pageCount = meta ? Math.ceil(meta.total / meta.limit) : 1;
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
@@ -257,7 +271,7 @@ export default function UsersClient() {
         </Table>
         <div className="flex items-center justify-between p-4 border-t">
           <div className="text-sm text-muted-foreground">
-            Page {meta?.page ?? 1} of {meta?.page_count ?? 1}
+            Page {meta?.page ?? 1} of {pageCount}
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="icon" onClick={() => setPage(1)} disabled={!meta || meta.page === 1}>
@@ -266,10 +280,10 @@ export default function UsersClient() {
             <Button variant="outline" size="icon" onClick={() => setPage(page - 1)} disabled={!meta || meta.page === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setPage(page + 1)} disabled={!meta || meta.page === meta.page_count}>
+            <Button variant="outline" size="icon" onClick={() => setPage(page + 1)} disabled={!meta || meta.page === pageCount}>
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setPage(meta?.page_count ?? 1)} disabled={!meta || meta.page === meta.page_count}>
+            <Button variant="outline" size="icon" onClick={() => setPage(pageCount)} disabled={!meta || meta.page === pageCount}>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

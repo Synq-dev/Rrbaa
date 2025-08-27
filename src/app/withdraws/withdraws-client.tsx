@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -25,14 +26,64 @@ import {
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import type { Withdraw, ApiMeta } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea";
 
-type WithdrawStatus = 'all' | 'PENDING' | 'APPROVED' | 'REJECTED';
+type WithdrawStatus = 'all' | 'pending' | 'approved' | 'rejected';
 
 const fetcher = (url: string) => api(url).then(res => res);
 
+function RejectWithdrawDialog({ withdrawId, onReject }: { withdrawId: string; onReject: (id: string, note?: string) => void }) {
+  const [note, setNote] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const handleSubmit = () => {
+    onReject(withdrawId, note);
+    setOpen(false);
+    setNote("");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <XCircle className="mr-2 h-4 w-4 text-red-500" />
+          Reject
+        </DropdownMenuItem>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reject Withdraw Request</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <Textarea
+            placeholder="Enter rejection reason (optional)..."
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">Cancel</Button>
+          </DialogClose>
+          <Button type="button" variant="destructive" onClick={handleSubmit}>Reject</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function WithdrawsClient() {
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<WithdrawStatus>('PENDING');
+  const [status, setStatus] = useState<WithdrawStatus>('pending');
   const { toast } = useToast();
 
   const queryParams = new URLSearchParams({
@@ -45,20 +96,15 @@ export default function WithdrawsClient() {
 
   const withdraws = data?.data ?? [];
   const meta = data?.meta;
+  const pageCount = meta ? Math.ceil(meta.total / meta.limit) : 1;
 
   const handleStatusChange = (value: string) => {
     setStatus(value as WithdrawStatus);
     setPage(1);
   };
   
-  const handleAction = async (id: string, action: 'approve' | 'reject') => {
+  const handleAction = async (id: string, action: 'approve' | 'reject', note?: string) => {
     try {
-      let note;
-      if (action === 'reject') {
-        note = prompt('Enter rejection note (optional):');
-        if (note === null) return; // User cancelled
-      }
-      
       const res = await api(`/withdraws/${id}/${action}`, {
         method: 'POST',
         body: note ? JSON.stringify({ note }) : undefined,
@@ -81,14 +127,14 @@ export default function WithdrawsClient() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "PENDING":
-        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">Pending</Badge>;
-      case "APPROVED":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>;
-      case "REJECTED":
-        return <Badge variant="destructive">Rejected</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 capitalize">Pending</Badge>;
+      case "approved":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200 capitalize">Approved</Badge>;
+      case "rejected":
+        return <Badge variant="destructive" className="capitalize">Rejected</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="capitalize">{status}</Badge>;
     }
   };
 
@@ -103,9 +149,9 @@ export default function WithdrawsClient() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -137,16 +183,16 @@ export default function WithdrawsClient() {
                   </TableRow>
                 ))
               : withdraws.map((withdraw) => (
-                  <TableRow key={withdraw.id}>
+                  <TableRow key={withdraw._id}>
                     <TableCell>{new Date(withdraw.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>{withdraw.user.username} ({withdraw.user.discord_id})</TableCell>
+                    <TableCell>{withdraw.user?.username} ({withdraw.user?.discord_id})</TableCell>
                     <TableCell>{withdraw.upi_id}</TableCell>
                     <TableCell>{getStatusBadge(withdraw.status)}</TableCell>
                     <TableCell className="text-right font-medium">
                       ₹{(withdraw.amount_paise / 100).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-center">
-                      {withdraw.status === 'PENDING' && (
+                      {withdraw.status === 'pending' && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -154,14 +200,11 @@ export default function WithdrawsClient() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleAction(withdraw.id, 'approve')}>
+                            <DropdownMenuItem onClick={() => handleAction(withdraw._id, 'approve')}>
                               <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                               Approve
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleAction(withdraw.id, 'reject')}>
-                              <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                              Reject
-                            </DropdownMenuItem>
+                            <RejectWithdrawDialog withdrawId={withdraw._id} onReject={handleAction} />
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
@@ -172,7 +215,7 @@ export default function WithdrawsClient() {
         </Table>
         <div className="flex items-center justify-between p-4 border-t">
           <div className="text-sm text-muted-foreground">
-            Page {meta?.page ?? 1} of {meta?.page_count ?? 1}
+             Page {meta?.page ?? 1} of {pageCount}
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="icon" onClick={() => setPage(1)} disabled={!meta || meta.page === 1}>
@@ -181,10 +224,10 @@ export default function WithdrawsClient() {
             <Button variant="outline" size="icon" onClick={() => setPage(page - 1)} disabled={!meta || meta.page === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setPage(page + 1)} disabled={!meta || meta.page === meta.page_count}>
+            <Button variant="outline" size="icon" onClick={() => setPage(page + 1)} disabled={!meta || meta.page === pageCount}>
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setPage(meta?.page_count ?? 1)} disabled={!meta || meta.page === meta.page_count}>
+            <Button variant="outline" size="icon" onClick={() => setPage(pageCount)} disabled={!meta || meta.page === pageCount}>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

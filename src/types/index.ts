@@ -1,3 +1,4 @@
+
 export interface Stats {
   users: number;
   leads: number;
@@ -10,7 +11,7 @@ export interface Lead {
   _id: string;
   created_at: string;
   offer_title: string;
-  referrer_discord_id: any;
+  referrer_discord_id: string;
   customer_name: string;
   customer_phone: string;
   status: 'pending' | 'verified' | 'rejected';
@@ -20,7 +21,7 @@ export interface Lead {
 }
 
 export interface Offer {
-  id: string;
+  _id: string;
   title: string;
   payout_user_paise: number;
   base_link: string;
@@ -32,21 +33,23 @@ export interface Offer {
 }
 
 export interface User {
+  _id: string;
   discord_id: string;
   username: string;
   wallet_balance_paise: number;
 }
 
 export interface WalletTransaction {
-    id: string;
+    _id: string;
     created_at: string;
     amount_paise: number;
-    type: 'CREDIT' | 'DEBIT';
+    type: 'lead_credit' | 'manual_adjust' | 'withdraw_approved' | 'withdraw_rejected';
     note: string;
+    reference_id?: string;
 }
 
 export interface Withdraw {
-  id: string;
+  _id: string;
   created_at: string;
   user: {
     discord_id: string;
@@ -54,7 +57,7 @@ export interface Withdraw {
   };
   upi_id: string;
   amount_paise: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'pending' | 'approved' | 'rejected';
   note?: string;
 }
 
@@ -62,5 +65,5 @@ export interface ApiMeta {
   page: number;
   limit: number;
   total: number;
-  page_count: number;
+  page_count?: number;
 }

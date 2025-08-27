@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -76,7 +77,7 @@ export function OfferFormDialog({ open, onOpenChange, offer, onSuccess }: OfferF
   const onSubmit = async (values: z.infer<typeof offerSchema>) => {
     try {
         const method = offer ? 'PUT' : 'POST';
-        const endpoint = offer ? `/offers/${offer.id}` : '/offers';
+        const endpoint = offer ? `/offers/${offer._id}` : '/offers';
         
         const res = await api(endpoint, {
             method,

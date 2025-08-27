@@ -36,7 +36,6 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
-import Image from "next/image";
 import { Textarea } from "@/components/ui/textarea";
 
 
@@ -102,6 +101,7 @@ export default function LeadsClient() {
   const { data, error, isLoading, mutate } = useSWR<{data: Lead[], meta: ApiMeta}>(`/leads?${queryParams.toString()}`, fetcher, { revalidateOnFocus: false });
   const leads = data?.data ?? [];
   const meta = data?.meta;
+  const pageCount = meta ? Math.ceil(meta.total / meta.limit) : 1;
   
   const handleStatusChange = (value: string) => {
     setStatus(value as LeadStatus);
@@ -266,7 +266,7 @@ export default function LeadsClient() {
         </Table>
         <div className="flex items-center justify-between p-4 border-t">
           <div className="text-sm text-muted-foreground">
-            Page {meta?.page ?? 1} of {meta?.page_count ?? 1}
+            Page {meta?.page ?? 1} of {pageCount}
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="icon" onClick={() => setPage(1)} disabled={!meta || meta.page === 1}>
@@ -275,10 +275,10 @@ export default function LeadsClient() {
             <Button variant="outline" size="icon" onClick={() => setPage(page - 1)} disabled={!meta || meta.page === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setPage(page + 1)} disabled={!meta || meta.page === meta.page_count}>
+            <Button variant="outline" size="icon" onClick={() => setPage(page + 1)} disabled={!meta || meta.page === pageCount}>
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setPage(meta?.page_count ?? 1)} disabled={!meta || meta.page === meta.page_count}>
+            <Button variant="outline" size="icon" onClick={() => setPage(pageCount)} disabled={!meta || meta.page === pageCount}>
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>

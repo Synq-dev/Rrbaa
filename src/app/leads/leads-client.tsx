@@ -98,7 +98,8 @@ export default function LeadsClient() {
     ...(search && { q: search }),
   });
 
-  const { data, error, isLoading, mutate } = useSWR<{data: Lead[], meta: ApiMeta}>(`/leads?${queryParams.toString()}`, fetcher, { revalidateOnFocus: false });
+  const SWR_KEY = `/leads?${queryParams.toString()}`;
+  const { data, error, isLoading, mutate } = useSWR<{data: Lead[], meta: ApiMeta}>(SWR_KEY, fetcher, { revalidateOnFocus: false });
   const leads = data?.data ?? [];
   const meta = data?.meta;
   const pageCount = meta ? Math.ceil(meta.total / meta.limit) : 1;
@@ -116,10 +117,7 @@ export default function LeadsClient() {
   const handleAction = async (leadId: string, action: 'verify' | 'reject', reason?: string) => {
     try {
       const endpoint = `/leads/${leadId}/${action}`;
-      const options: RequestInit = {
-        method: 'POST',
-        body: null,
-      };
+      const options: RequestInit = { method: 'POST', body: null };
 
       if (action === 'reject' && reason) {
         options.body = JSON.stringify({ reason });
@@ -129,7 +127,7 @@ export default function LeadsClient() {
       
       if (res.ok) {
         toast({ title: "Success", description: `Lead ${action === 'verify' ? 'verified' : 'rejected'} successfully.` });
-        mutate();
+        mutate(SWR_KEY);
       } else {
         throw new Error((res as any).error || 'An error occurred.');
       }

@@ -1,4 +1,4 @@
-const API = "https://calendars-studios-amount-deadly.trycloudflare.com";
+const API = "https://propecia-foreign-pace-minutes.trycloudflare.com";
 
 const getToken = () => {
     if (typeof window !== 'undefined') {
@@ -10,7 +10,6 @@ const getToken = () => {
 export async function api<T = any>(path: string, init: RequestInit = {}): Promise<{ ok: true, data: T, meta?: any }> {
   const headers = new Headers(init.headers || {});
   
-  // Only set Content-Type if there's a body
   if (init.body && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
   }
@@ -42,13 +41,11 @@ export async function api<T = any>(path: string, init: RequestInit = {}): Promis
     throw new Error("Unauthorized. Please log in again.");
   }
   
-  // Use try-catch for responses that might not have a body (e.g., 204 No Content)
   let json;
   try {
     json = await res.json();
   } catch (e) {
     if (res.ok) {
-        // Assume success if response is ok but no json body
         return { ok: true, data: {} as T };
     }
     throw new Error("Bad JSON response from server");

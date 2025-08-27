@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -38,6 +39,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import { Badge } from "@/components/ui/badge";
 
 
 const fetcher = (url: string) => api(url).then(res => res);
@@ -67,6 +69,7 @@ function AdjustWalletForm({ user, onSuccess }: { user: User, onSuccess: () => vo
                 toast({ title: "Success", description: "Wallet adjusted successfully." });
                 onSuccess();
                 setOpen(false);
+                form.reset();
             } else {
                 throw new Error((res as any).error || "An error occurred");
             }
@@ -78,7 +81,7 @@ function AdjustWalletForm({ user, onSuccess }: { user: User, onSuccess: () => vo
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm"><Wallet className="mr-2" /> Adjust Wallet</Button>
+                <Button size="sm"><Wallet className="mr-2 h-4 w-4" /> Adjust Wallet</Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -93,7 +96,7 @@ function AdjustWalletForm({ user, onSuccess }: { user: User, onSuccess: () => vo
                             <FormItem>
                             <FormLabel>Amount (in paise)</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="e.g., 10000 for ₹100" {...field} />
+                                <Input type="number" placeholder="e.g., 10000 for ₹100, -5000 for -₹50" {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -133,7 +136,7 @@ function ViewWalletTransactions({ userId }: { userId: string }) {
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm">View History</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-xl">
+            <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Wallet Transaction History</DialogTitle>
                 </DialogHeader>
@@ -152,14 +155,20 @@ function ViewWalletTransactions({ userId }: { userId: string }) {
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-5" /></TableCell></TableRow>
                                 ))
+                            ) : (data?.data ?? []).length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24">No transactions found.</TableCell>
+                                </TableRow>
                             ) : (data?.data ?? []).map(tx => (
                                 <TableRow key={tx.id}>
                                     <TableCell>{new Date(tx.created_at).toLocaleString()}</TableCell>
                                     <TableCell>
                                         <Badge variant={tx.type === 'CREDIT' ? 'default' : 'destructive'} className={tx.type === 'CREDIT' ? 'bg-green-100 text-green-800' : ''}>{tx.type}</Badge>
                                     </TableCell>
-                                    <TableCell>{tx.note}</TableCell>
-                                    <TableCell className="text-right font-medium">₹{(tx.amount_paise / 100).toFixed(2)}</TableCell>
+                                    <TableCell className="max-w-[200px] truncate">{tx.note}</TableCell>
+                                    <TableCell className={`text-right font-medium ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}>
+                                      {tx.type === 'CREDIT' ? '+' : '-'}₹{(Math.abs(tx.amount_paise) / 100).toFixed(2)}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -220,11 +229,17 @@ export default function UsersClient() {
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell className="text-center"><Skeleton className="h-8 w-32 rounded-md" /></TableCell>
+                    <TableCell className="text-center"><Skeleton className="h-8 w-48 rounded-md" /></TableCell>
                   </TableRow>
                 ))
-              : users.map((user) => (
-                  <TableRow key={user.discord_id}>
+              : users.length === 0 
+              ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center h-24">No users found.</TableCell>
+                </TableRow>
+              )
+              : users.map((user, index) => (
+                  <TableRow key={`${user.discord_id}-${index}`}>
                     <TableCell>{user.discord_id}</TableCell>
                     <TableCell>{user.username}</TableCell>
                     <TableCell className="font-medium">

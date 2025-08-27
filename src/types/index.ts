@@ -1,9 +1,9 @@
 export interface Stats {
-  total_users: number;
-  total_leads: number;
-  verified_leads: number;
-  total_offers: number;
-  total_withdraw_reqs: number;
+  users: number;
+  leads: number;
+  verified: number;
+  offers: number;
+  withdraws: number;
 }
 
 export interface Lead {

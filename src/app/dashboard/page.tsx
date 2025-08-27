@@ -43,11 +43,11 @@ export default function DashboardPage() {
           </>
         ) : stats ? (
           <>
-            <KpiCard title="Total Users" value={stats.total_users} icon={Users} />
-            <KpiCard title="Total Leads" value={stats.total_leads} icon={FileText} />
-            <KpiCard title="Verified Leads" value={stats.verified_leads} icon={BadgeCheck} />
-            <KpiCard title="Offers" value={stats.total_offers} icon={Tag} />
-            <KpiCard title="Withdraw Requests" value={stats.total_withdraw_reqs} icon={Banknote} />
+            <KpiCard title="Total Users" value={stats.users} icon={Users} />
+            <KpiCard title="Total Leads" value={stats.leads} icon={FileText} />
+            <KpiCard title="Verified Leads" value={stats.verified} icon={BadgeCheck} />
+            <KpiCard title="Offers" value={stats.offers} icon={Tag} />
+            <KpiCard title="Withdraw Requests" value={stats.withdraws} icon={Banknote} />
           </>
         ) : null}
       </div>

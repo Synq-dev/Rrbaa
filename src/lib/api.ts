@@ -1,4 +1,4 @@
-const API = "http://193.23.221.170:5050";
+const API = "https://193.23.221.170:5050";
 
 const getToken = () => {
     if (typeof window !== 'undefined') {
@@ -22,8 +22,8 @@ export async function api<T = any>(path: string, init: RequestInit = {}): Promis
     res = await fetch(`${API}${path}`, { ...init, headers });
   } catch (error) {
     console.error('Fetch failed:', error);
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('Failed to fetch: Could not connect to the API server. Please check the network connection and the API endpoint.');
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('Failed to fetch: Could not connect to the API server. Please check the network connection and the API endpoint. It might be a CORS or mixed content issue.');
     }
     throw error;
   }

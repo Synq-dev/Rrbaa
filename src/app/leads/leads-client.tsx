@@ -40,7 +40,7 @@ import Image from "next/image";
 import { Textarea } from "@/components/ui/textarea";
 
 
-type LeadStatus = 'all' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+type LeadStatus = 'all' | 'pending' | 'verified' | 'rejected';
 
 const fetcher = (url: string) => api(url).then(res => res);
 
@@ -87,7 +87,7 @@ function RejectLeadDialog({ leadId, onReject }: { leadId: string; onReject: (id:
 
 export default function LeadsClient() {
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<LeadStatus>('PENDING');
+  const [status, setStatus] = useState<LeadStatus>('pending');
   const [search, setSearch] = useState('');
   const { toast } = useToast();
 
@@ -136,14 +136,14 @@ export default function LeadsClient() {
   
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "PENDING":
-        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">Pending</Badge>;
-      case "VERIFIED":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Verified</Badge>;
-      case "REJECTED":
-        return <Badge variant="destructive">Rejected</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 capitalize">Pending</Badge>;
+      case "verified":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200 capitalize">Verified</Badge>;
+      case "rejected":
+        return <Badge variant="destructive" className="capitalize">Rejected</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="capitalize">{status}</Badge>;
     }
   };
 
@@ -162,9 +162,9 @@ export default function LeadsClient() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="VERIFIED">Verified</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="verified">Verified</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -198,10 +198,10 @@ export default function LeadsClient() {
                   </TableRow>
                 ))
               : leads.map((lead, index) => (
-                  <TableRow key={`${lead.id}-${index}`}>
+                  <TableRow key={`${lead._id}-${index}`}>
                     <TableCell>{new Date(lead.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>{lead.offer_title}</TableCell>
-                    <TableCell>{lead.referrer_discord_id}</TableCell>
+                    <TableCell>{String(lead.referrer_discord_id)}</TableCell>
                     <TableCell>{lead.customer_name}</TableCell>
                     <TableCell>{getStatusBadge(lead.status)}</TableCell>
                     <TableCell className="text-right font-medium">
@@ -222,13 +222,13 @@ export default function LeadsClient() {
                                     View Details
                                   </DropdownMenuItem>
                                 </DialogTrigger>
-                              {lead.status === 'PENDING' && (
+                              {lead.status === 'pending' && (
                                 <>
-                                  <DropdownMenuItem onClick={() => handleAction(lead.id, 'verify')}>
+                                  <DropdownMenuItem onClick={() => handleAction(lead._id, 'verify')}>
                                     <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                                     Verify
                                   </DropdownMenuItem>
-                                  <RejectLeadDialog leadId={lead.id} onReject={handleAction} />
+                                  <RejectLeadDialog leadId={lead._id} onReject={handleAction} />
                                 </>
                               )}
                             </DropdownMenuContent>
@@ -250,10 +250,10 @@ export default function LeadsClient() {
                                 <span className="text-sm font-semibold text-muted-foreground w-28">Screenshot</span>
                                 <a href={lead.screenshot_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">View Screenshot</a>
                               </div>
-                              {lead.rejection_reason && (
+                              {lead.status_reason && (
                                 <div className="flex items-start gap-4">
                                   <span className="text-sm font-semibold text-muted-foreground w-28">Rejection Reason</span>
-                                  <p className="text-sm">{lead.rejection_reason}</p>
+                                  <p className="text-sm">{lead.status_reason}</p>
                                 </div>
                               )}
                             </div>

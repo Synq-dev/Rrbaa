@@ -7,16 +7,16 @@ export interface Stats {
 }
 
 export interface Lead {
-  id: string;
+  _id: string;
   created_at: string;
   offer_title: string;
-  referrer_discord_id: string;
+  referrer_discord_id: any;
   customer_name: string;
   customer_phone: string;
-  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  status: 'pending' | 'verified' | 'rejected';
   payout_user_paise: number;
   screenshot_url: string;
-  rejection_reason?: string;
+  status_reason?: string | null;
 }
 
 export interface Offer {

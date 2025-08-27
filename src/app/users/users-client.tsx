@@ -240,7 +240,7 @@ export default function UsersClient() {
               )
               : users.map((user, index) => (
                   <TableRow key={`${user.discord_id}-${index}`}>
-                    <TableCell>{user.discord_id}</TableCell>
+                    <TableCell>{String(user.discord_id)}</TableCell>
                     <TableCell>{user.username}</TableCell>
                     <TableCell className="font-medium">
                       ₹{(user.wallet_balance_paise / 100).toFixed(2)}

@@ -163,7 +163,7 @@ export default function WithdrawsClient() {
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
-              <TableHead>User</TableHead>
+              <TableHead>User Discord ID</TableHead>
               <TableHead>UPI ID</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Amount</TableHead>
@@ -185,8 +185,8 @@ export default function WithdrawsClient() {
               : withdraws.map((withdraw) => (
                   <TableRow key={withdraw._id}>
                     <TableCell>{new Date(withdraw.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>{withdraw.user?.username} ({withdraw.user?.discord_id})</TableCell>
-                    <TableCell>{withdraw.upi_id}</TableCell>
+                    <TableCell>{withdraw.user_discord_id}</TableCell>
+                    <TableCell>{withdraw.upi}</TableCell>
                     <TableCell>{getStatusBadge(withdraw.status)}</TableCell>
                     <TableCell className="text-right font-medium">
                       ₹{(withdraw.amount_paise / 100).toFixed(2)}

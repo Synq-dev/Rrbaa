@@ -118,8 +118,11 @@ export default function LeadsClient() {
       const endpoint = `/leads/${leadId}/${action}`;
       const options: RequestInit = {
         method: 'POST',
-        ...(reason && { body: JSON.stringify({ reason }) })
       };
+
+      if (action === 'reject' && reason) {
+        options.body = JSON.stringify({ reason });
+      }
       
       const res = await api(endpoint, options);
       
@@ -228,7 +231,7 @@ export default function LeadsClient() {
                                     <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                                     Verify
                                   </DropdownMenuItem>
-                                  <RejectLeadDialog leadId={lead._id} onReject={handleAction} />
+                                  <RejectLeadDialog leadId={lead._id} onReject={(id, reason) => handleAction(id, 'reject', reason)} />
                                 </>
                               )}
                             </DropdownMenuContent>

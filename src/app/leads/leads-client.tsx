@@ -118,6 +118,7 @@ export default function LeadsClient() {
       const endpoint = `/leads/${leadId}/${action}`;
       const options: RequestInit = {
         method: 'POST',
+        body: null,
       };
 
       if (action === 'reject' && reason) {

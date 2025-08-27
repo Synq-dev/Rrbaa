@@ -1,4 +1,4 @@
-const API = "https://193.23.221.170:5050";
+const API = "http://193.23.221.170:5050";
 
 const getToken = () => {
     if (typeof window !== 'undefined') {

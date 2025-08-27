@@ -1,4 +1,4 @@
-const API = "http://193.23.221.170:5050";
+const API = "https://calendars-studios-amount-deadly.trycloudflare.com";
 
 const getToken = () => {
     if (typeof window !== 'undefined') {

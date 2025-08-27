@@ -9,9 +9,12 @@ const getToken = () => {
 
 export async function api<T = any>(path: string, init: RequestInit = {}): Promise<{ ok: true, data: T, meta?: any }> {
   const headers = new Headers(init.headers || {});
-  if (!headers.has("Content-Type")) {
+  
+  // Only set Content-Type if there's a body
+  if (init.body && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
   }
+
   const token = getToken();
   if (!headers.has("Authorization") && token) {
     headers.set("Authorization", `Bearer ${token}`);

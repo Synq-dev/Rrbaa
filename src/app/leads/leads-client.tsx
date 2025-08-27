@@ -33,13 +33,57 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog"
 import Image from "next/image";
+import { Textarea } from "@/components/ui/textarea";
 
 
 type LeadStatus = 'all' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
 const fetcher = (url: string) => api(url).then(res => res);
+
+function RejectLeadDialog({ leadId, onReject }: { leadId: string; onReject: (id: string, reason?: string) => void }) {
+  const [reason, setReason] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const handleSubmit = () => {
+    onReject(leadId, reason);
+    setOpen(false);
+    setReason("");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <XCircle className="mr-2 h-4 w-4 text-red-500" />
+          Reject
+        </DropdownMenuItem>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reject Lead</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <Textarea
+            placeholder="Enter rejection reason (optional)..."
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">Cancel</Button>
+          </DialogClose>
+          <Button type="button" variant="destructive" onClick={handleSubmit}>Reject</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function LeadsClient() {
   const [page, setPage] = useState(1);
@@ -50,6 +94,7 @@ export default function LeadsClient() {
   const queryParams = new URLSearchParams({
     page: page.toString(),
     limit: '10',
+    sort: '-created_at',
     ...(status !== 'all' && { status }),
     ...(search && { q: search }),
   });
@@ -183,13 +228,7 @@ export default function LeadsClient() {
                                     <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                                     Verify
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => {
-                                      const reason = prompt("Enter rejection reason (optional):");
-                                      if (reason !== null) handleAction(lead.id, 'reject', reason);
-                                  }}>
-                                    <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                                    Reject
-                                  </DropdownMenuItem>
+                                  <RejectLeadDialog leadId={lead.id} onReject={handleAction} />
                                 </>
                               )}
                             </DropdownMenuContent>
@@ -248,3 +287,5 @@ export default function LeadsClient() {
     </Card>
   );
 }
+
+    

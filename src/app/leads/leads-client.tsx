@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Eye, RefreshCw, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Eye, RefreshCw, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckCircle, XCircle, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +20,22 @@ import { api } from "@/lib/api";
 import type { Lead, ApiMeta } from "@/types";
 import useSWR from 'swr';
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import Image from "next/image";
+
 
 type LeadStatus = 'all' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
@@ -27,8 +43,9 @@ const fetcher = (url: string) => api(url).then(res => res);
 
 export default function LeadsClient() {
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<LeadStatus>('all');
+  const [status, setStatus] = useState<LeadStatus>('PENDING');
   const [search, setSearch] = useState('');
+  const { toast } = useToast();
 
   const queryParams = new URLSearchParams({
     page: page.toString(),
@@ -50,6 +67,27 @@ export default function LeadsClient() {
     setSearch(event.target.value);
     setPage(1);
   };
+
+  const handleAction = async (leadId: string, action: 'verify' | 'reject', reason?: string) => {
+    try {
+      const endpoint = `/leads/${leadId}/${action}`;
+      const options: RequestInit = {
+        method: 'POST',
+        ...(reason && { body: JSON.stringify({ reason }) })
+      };
+      
+      const res = await api(endpoint, options);
+      
+      if (res.ok) {
+        toast({ title: "Success", description: `Lead ${action === 'verify' ? 'verified' : 'rejected'} successfully.` });
+        mutate();
+      } else {
+        throw new Error((res as any).error || 'An error occurred.');
+      }
+    } catch (err) {
+      toast({ variant: 'destructive', title: "Error", description: err instanceof Error ? err.message : 'Failed to perform action.' });
+    }
+  }
   
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -125,9 +163,63 @@ export default function LeadsClient() {
                       ₹{(lead.payout_user_paise / 100).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="ghost" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                       <Dialog>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DialogTrigger asChild>
+                                  <DropdownMenuItem>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                </DialogTrigger>
+                              {lead.status === 'PENDING' && (
+                                <>
+                                  <DropdownMenuItem onClick={() => handleAction(lead.id, 'verify')}>
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                    Verify
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => {
+                                      const reason = prompt("Enter rejection reason (optional):");
+                                      if (reason !== null) handleAction(lead.id, 'reject', reason);
+                                  }}>
+                                    <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                           <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Lead Details</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="flex items-center gap-4">
+                                <span className="text-sm font-semibold text-muted-foreground w-28">Customer Name</span>
+                                <span>{lead.customer_name}</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className="text-sm font-semibold text-muted-foreground w-28">Customer Phone</span>
+                                <span>{lead.customer_phone}</span>
+                              </div>
+                               <div className="flex items-center gap-4">
+                                <span className="text-sm font-semibold text-muted-foreground w-28">Screenshot</span>
+                                <a href={lead.screenshot_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">View Screenshot</a>
+                              </div>
+                              {lead.rejection_reason && (
+                                <div className="flex items-start gap-4">
+                                  <span className="text-sm font-semibold text-muted-foreground w-28">Rejection Reason</span>
+                                  <p className="text-sm">{lead.rejection_reason}</p>
+                                </div>
+                              )}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                     </TableCell>
                   </TableRow>
                 ))}
